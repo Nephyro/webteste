@@ -1,3 +1,10 @@
+// Força o scroll para o topo antes do reload terminar
+if ('scrollRestoration' in history) {
+    history.scrollRestoration = 'manual';
+}
+    
+window.scrollTo(0, 0);
+
 window.addEventListener('load', () => {
     const loader = document.getElementById('loader');
     const container = document.getElementById('main-container');
@@ -5,8 +12,13 @@ window.addEventListener('load', () => {
     const progressBarFill = document.getElementById('progress-bar-fill');
     const cascadeWrapper = document.getElementById('cascade-wrapper');
     const navbar = document.getElementById('navbar');
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
 
-    // --- 1. NAVBAR ---
+
+
+
+    // --- 1. NAVBAR (Comportamento de Scroll) ---
     let lastScrollTop = 0;
     window.addEventListener('scroll', () => {
         let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
@@ -14,26 +26,28 @@ window.addEventListener('load', () => {
         lastScrollTop = scrollTop <= 0 ? 0 : scrollTop; 
     }, { passive: true });
 
-    // --- 2. SCROLL SUAVE ---
-    document.querySelectorAll('.nav-link').forEach(anchor => {
+    // --- 2. SCROLL SUAVE PARA LINKS ---
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
-            e.preventDefault();
             const targetId = this.getAttribute('href');
-            if (targetId === "#inicio") {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-                return;
-            }
-            const targetElement = document.querySelector(targetId);
-            if (targetElement) {
-                const offset = 90; 
-                const targetPosition = targetElement.getBoundingClientRect().top + window.pageYOffset - offset;
-                window.scrollTo({ top: targetPosition, behavior: 'smooth' });
+            if (targetId.startsWith("#")) {
+                e.preventDefault();
+                if (targetId === "#inicio") {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    return;
+                }
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    const offset = 90; 
+                    const targetPosition = targetElement.getBoundingClientRect().top + window.pageYOffset - offset;
+                    window.scrollTo({ top: targetPosition, behavior: 'smooth' });
+                }
             }
         });
     });
 
-    // --- 3. LOADER & CASCATA ---
-    const codeFragments = ["BOOT_NODE_082", "AUTH_KEY_VERIFIED", "SQL_SHIELD_UP", "JVM_THREAD_INIT", "DOCKER_SPAWN_OK", "ENCRYPT_AES_256"];
+    // --- 3. LOADER (Efeito de Cascata de Código) ---
+    const codeFragments = ["BOOT_NODE_082", "AUTH_KEY_VERIFIED", "SQL_SHIELD_UP", "JVM_THREAD_INIT", "ENCRYPT_AES_256"];
     function createCodeLine() {
         if (!cascadeWrapper) return;
         const line = document.createElement('div');
@@ -44,10 +58,11 @@ window.addEventListener('load', () => {
     }
     const cascadeInterval = setInterval(createCodeLine, 50);
 
-    // --- 4. TYPEWRITER ---
+    // --- 4. TYPEWRITER (Header) ---
     function typeFullTitle() {
         const name = "ANDERSON RIBEIRO";
         const titleContainer = document.getElementById('typewriter-name');
+        if (!titleContainer) return;
         let i = 0;
         function step() {
             if (i < name.length) {
@@ -62,12 +77,14 @@ window.addEventListener('load', () => {
         step();
     }
 
-    // --- 5. PROGRESSO ---
+    // --- 5. PROGRESSO DO CARREGAMENTO ---
     let progress = 0;
     const bootInterval = setInterval(() => {
         progress += Math.floor(Math.random() * 12) + 1;
         if (progress >= 100) {
-            progress = 100; clearInterval(bootInterval); clearInterval(cascadeInterval);
+            progress = 100; 
+            clearInterval(bootInterval); 
+            clearInterval(cascadeInterval);
             setTimeout(() => { 
                 loader.style.opacity = '0'; 
                 setTimeout(() => { 
@@ -81,65 +98,172 @@ window.addEventListener('load', () => {
         progressBarFill.style.width = `${progress}%`; 
     }, 90);
 
-    // --- 6. TERMINAL AJUSTADO (CÓDIGO + OUTPUT) ---
-    const terminalData = [
-        {text: '>>> ', color: '#7289a3'}, 
-        {text: 'System.out.println', color: '#ff1f57'}, 
-        {text: '(', color: '#fff'}, 
-        {text: '"Hello World"', color: '#f1fa8c'}, 
-        {text: ');\n', color: '#fff'},
-        {text: 'Hello World', color: '#fff', delay: 500, isOutput: true} 
-    ];
+    // --- 6. ROLETA 3D DE PROJETOS ---
+    const carousel = document.getElementById('carousel');
+    const cards = document.querySelectorAll('.card');
+    if (carousel && cards.length > 0) {
+        let currentIndex = 0;
+        const angleStep = 360 / cards.length;
+        const radius = 350; 
+        let isDragging = false, startX = 0, currentDragDistance = 0;
 
-    let pIdx = 0, cIdx = 0, isTyping = false;
-    function typeTerminal() {
-        if (isTyping) return; isTyping = true;
-        const terminalEl = document.getElementById('terminal-code');
-        
-        function step() {
-            if (pIdx < terminalData.length) {
-                const currentPart = terminalData[pIdx];
-                
-                if (cIdx === 0) {
-                    const s = document.createElement('span');
-                    s.style.color = currentPart.color;
-                    if (currentPart.isOutput) s.style.fontWeight = 'bold';
-                    s.id = `term-${pIdx}`;
-                    terminalEl.appendChild(s);
-                }
+        cards.forEach((card, i) => {
+            card.style.transform = `rotateY(${i * angleStep}deg) translateZ(${radius}px)`;
+        });
 
-                document.getElementById(`term-${pIdx}`).textContent += currentPart.text.charAt(cIdx++);
+        const updateRotation = () => {
+            carousel.style.transform = `translateZ(-${radius}px) rotateY(${currentIndex * -angleStep}deg)`;
+        };
+        updateRotation();
 
-                if (cIdx >= currentPart.text.length) {
-                    cIdx = 0;
-                    pIdx++;
-                    setTimeout(step, currentPart.delay || 40);
-                } else {
-                    setTimeout(step, 40);
-                }
+        const onStart = (e) => {
+            isDragging = true;
+            startX = e.pageX || e.touches[0].pageX;
+            currentDragDistance = 0;
+        };
+        const onMove = (e) => {
+            if (!isDragging) return;
+            currentDragDistance = (e.pageX || e.touches[0].pageX) - startX;
+        };
+        const onEnd = () => {
+            if (!isDragging) return;
+            if (Math.abs(currentDragDistance) > 80) {
+                currentDragDistance > 0 ? currentIndex-- : currentIndex++;
+                updateRotation();
             }
-        }
-        step();
+            isDragging = false;
+        };
+
+        window.addEventListener('mousedown', onStart);
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onEnd);
+        window.addEventListener('touchstart', onStart);
+        window.addEventListener('touchmove', onMove);
+        window.addEventListener('touchend', onEnd);
+
+        cards.forEach(card => {
+            card.addEventListener('click', () => {
+                if (Math.abs(currentDragDistance) < 10) card.classList.toggle('flipped');
+            });
+        });
     }
 
-    // --- 7. MOUSE & TILT ---
-    document.addEventListener('mousemove', (e) => {
-        const bgLight = document.getElementById('bg-light');
-        const cursor = document.getElementById('custom-cursor');
-        if (bgLight) bgLight.style.background = `radial-gradient(circle 250px at ${e.clientX}px ${e.clientY}px, transparent 0%, rgba(2, 4, 10, 1) 100%)`;
-        if (cursor) { cursor.style.left = `${e.clientX}px`; cursor.style.top = `${e.clientY}px`; }
-    });
+    // --- 7. TERMINAL (Simulação Java) ---
+    const terminalData = [
+        { text: "anderson@linux:~$ ", color: "#60a5fa", type: "prompt" }, 
+        { text: "python3 hello_world.py", color: "#fff", type: "input", delay: 80 }, 
+        { text: "Traceback (most recent call last):", color: "#ef4444", type: "output" },
+        { text: '  File "hello_world.py", line 1, in <module>', color: "#ef4444", type: "output" },
+        { text: "PermissionError: [Errno 13] Permission denied", color: "#ef4444", type: "output" },
+        { text: "anderson@linux:~$ ", color: "#60a5fa", type: "prompt" },
+        { text: "...", color: "#fff", type: "input", delay: 1000 }, // Pausa dramática
+        { text: "sudo !!", color: "#fff", type: "input", delay: 150 },
+        { text: "[sudo] password for developer: **********", color: "#7289a3", type: "input", delay: 30 },
+        { text: "Hello World!", color: "#f1fa8c", type: "success" } 
+    ];
+    
+    let pIdx = 0;
+    let isTerminalTyping = false;
+    
+    async function typeTerminal() {
+        const terminalEl = document.getElementById('terminal-code');
+        const cursor = document.getElementById('terminal-cursor'); // Pegamos o cursor
+        
+        if (!terminalEl || isTerminalTyping) return;
+        isTerminalTyping = true;
+    
+        for (const line of terminalData) {
+            const span = document.createElement('span');
+            span.style.color = line.color;
+            
+            if (line.type === "success") {
+                span.className = "block text-xl font-bold mt-2 text-[#7ee787] animate-pulse";
+            }
+    
+            terminalEl.appendChild(span);
+    
+            if (line.type === "input") {
+                // Colocamos o cursor DENTRO do span para ele ficar colado no texto
+                span.appendChild(cursor); 
+    
+                for (const char of line.text) {
+                    // Inserimos o texto ANTES do cursor
+                    const charNode = document.createTextNode(char);
+                    span.insertBefore(charNode, cursor); 
+                    
+                    await new Promise(r => setTimeout(r, line.delay || 50));
+                }
+                
+                // Após terminar a linha, podemos deixar o cursor ali ou mover para a próxima
+                terminalEl.appendChild(document.createElement('br'));
+            } else {
+                span.textContent = line.text;
+                if (line.type !== "prompt") {
+                    terminalEl.appendChild(document.createElement('br'));
+                }
+                // Move o cursor para o final da última ação
+                terminalEl.appendChild(cursor);
+            }
+    
+            await new Promise(r => setTimeout(r, 600));
+            
+            const container = document.getElementById('terminal-container');
+            container.scrollTop = container.scrollHeight;
+        }
+    }
 
-    document.querySelectorAll('.tilt-card').forEach(card => {
-        card.addEventListener('mousemove', (e) => {
-            const rect = card.getBoundingClientRect();
-            card.style.transform = `rotateX(${(rect.height/2-(e.clientY - rect.top))/12}deg) rotateY(${(e.clientX - rect.left-rect.width/2)/12}deg) scale3d(1.02, 1.02, 1.02)`;
-            card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`); card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+    // --- 8. MOUSE EFFECT (Luz de Fundo e Tilt nos Cards) ---
+document.addEventListener('mousemove', (e) => {
+    const bgLight = document.getElementById('bg-light');
+    const cursor = document.getElementById('custom-cursor');
+    const stackCards = document.querySelectorAll('.stack-card');
+
+    // Move a luz de fundo e o cursor
+    if (bgLight) bgLight.style.background = `radial-gradient(circle 250px at ${e.clientX}px ${e.clientY}px, transparent 0%, rgba(2, 4, 10, 1) 100%)`;
+    if (cursor) { 
+        cursor.style.left = `${e.clientX}px`; 
+        cursor.style.top = `${e.clientY}px`; 
+    }
+
+    // Efeito de Inclinação (Tilt)
+    stackCards.forEach(card => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        // Se o mouse estiver dentro do card
+        if (x > 0 && y > 0 && x < rect.width && y < rect.height) {
+            const rotateX = (y / rect.height - 0.5) * -15; // Inclinação vertical
+            const rotateY = (x / rect.width - 0.5) * 15;   // Inclinação horizontal
+            
+            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+            card.style.borderColor = "rgba(255, 31, 87, 0.6)";
+        } else {
+            card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
+            card.style.borderColor = "rgba(255, 31, 87, 0.1)";
+        }
+    });
+});
+
+    // --- 9. MENU MOBILE ---
+    if (mobileMenuBtn && mobileMenu) {
+        mobileMenuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isHidden = mobileMenu.classList.toggle('hidden');
+            mobileMenu.classList.toggle('flex', !isHidden);
+            mobileMenuBtn.querySelector('i').className = isHidden ? 'fas fa-bars' : 'fas fa-times';
         });
-        card.addEventListener('mouseleave', () => card.style.transform = `rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`);
-    });
 
-    // --- 8. OBSERVER ---
+        document.querySelectorAll('.mobile-nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.add('hidden');
+                mobileMenu.classList.remove('flex');
+                mobileMenuBtn.querySelector('i').className = 'fas fa-bars';
+            });
+        });
+    }
+
+    // --- 10. OBSERVER (Reveal de Seções) ---
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => { 
             if(entry.isIntersecting) { 

@@ -74,14 +74,92 @@
             z-index: 1;
         }
         .footer-content { position: relative; z-index: 2; }
+
+        /* Esconde o cursor personalizado em telas menores que 1024px (Tablets e Celulares) */
+        @media (max-width: 1024px) {
+            #custom-cursor {
+                display: none !important;
+            }
+            body {
+                cursor: auto !important; /* Devolve o cursor padrão do sistema */
+            }
+            
+            /* Ajuste do Loader para Mobile */
+            #code-cascade {
+                height: 200px; /* Reduz a altura da cascata de código */
+                margin-bottom: 2rem;
+            }
+
+            #loader h1 {
+                font-size: 1.25rem; /* Título menor */
+            }
+
+            /* Ajuste da Roleta 3D para não cortar nas bordas */
+            .perspective {
+                perspective: 1000px;
+            }
+        }
+
+        .stack-card {
+        /* Impede que o mouse "trema" ao entrar no card */
+        transition: transform 0.1s ease-out, border-color 0.3s ease;
+        /* Força o uso da GPU para processar o movimento 3D sem lag */
+        will-change: transform;
+        transform-style: preserve-3d;
+        backface-visibility: hidden;
+        }
+
+        /* Garante que os itens dentro do card (ícones e texto) também pareçam 3D */
+        .stack-card > * {
+            transform: translateZ(20px);
+        }
+
+        /* Estado inicial do ícone */
+        .logo-icon-effect {
+            display: inline-block;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            will-change: transform, text-shadow;
+        }
+
+        .group:hover .logo-icon-effect {
+            /* Efeito de Glitch igual aos títulos */
+            text-shadow: 3px 0 #fff, -3px 0 #ff1f57;
+            /* Deslocamento lateral */
+            transform: translateX(8px); 
+            color: #fff !important;
+        }
+
+        /* Animação de Glitch Estático (Piscando) */
+        @keyframes glitch-flicker {
+            0% { opacity: 1; text-shadow: 2px 0 #fff, -2px 0 #ff1f57; color: #fff; }
+            25% { opacity: 0.3; text-shadow: none; color: #ff1f57; }
+            50% { opacity: 1; text-shadow: -2px 0 #fff, 2px 0 #ff1f57; color: #fff; }
+            75% { opacity: 0.6; text-shadow: none; }
+            100% { opacity: 1; text-shadow: 2px 0 #fff, -2px 0 #ff1f57; color: #fff; }
+        }
+
+        /* Aplica a animação ao passar o mouse */
+        .nav-link:hover {
+            animation: glitch-flicker 0.8s infinite;
+            /* Removemos o transform ou letter-spacing para ele não esticar */
+            transform: none; 
+        }
+
+        /* O site começa "travado" */
+        body.is-loading {
+            overflow: hidden !important;
+            height: 100vh !important;
+        }
+
     </style>
 </head>
-<body class="text-[#7289a3] cursor-none font-cyber bg-[#02040a] no-select">
+<body class="is-loading text-[#7289a3] cursor-none font-cyber bg-[#02040a] no-select">
 
     <nav id="navbar" class="fixed top-0 w-full z-[5000] transition-all duration-500 bg-[#02040a]/90 backdrop-blur-md border-b border-[#ff1f57]/10 py-4">
         <div class="max-w-6xl mx-auto px-8 flex justify-between items-center">
-            <a href="#inicio" class="text-white font-bold text-sm tracking-tighter uppercase group cursor-pointer">
-                A.<span class="text-[#ff1f57] group-hover:text-white transition-all duration-300">Ribeiro</span>
+            <a href="#inicio" class="text-white font-bold text-sm tracking-tighter uppercase group cursor-pointer flex items-center">
+                <i class="fa-brands fa-asymmetrik logo-icon-effect text-[#ff1F57] group-hover:text-white transition-all duration-300 mr-3 text-base"></i>
+                <span class="text-[#ff1f57] group-hover:text-white transition-all duration-300">Ribeiro</span>
             </a>
             <div class="hidden md:flex gap-8">
                 <a href="#sobre" class="nav-link text-[10px] uppercase tracking-widest hover:text-[#ff1f57] transition-all">Sobre</a>
@@ -107,13 +185,19 @@
                 <div id="cascade-wrapper" class="flex flex-col gap-1 opacity-40"></div>
             </div>
             <div class="bg-[#050812] border border-[#ff1f57]/20 p-6 backdrop-blur-md">
-                <div class="flex justify-between items-start mb-6 border-b border-[#ff1f57]/10 pb-4 text-[#ff1f57]">
-                    <div>
-                        <h1 class="text-2xl font-bold tracking-tighter uppercase">Sequência_Autenticação</h1>
-                        <p class="text-[9px] mt-1 uppercase text-[#7289a3]">Usuário: Anderson_Ribeiro.sys</p>
-                    </div>
-                    <div class="text-5xl font-bold" id="load-percent">0%</div>
+                <div class="flex justify-between items-end mb-6 border-b border-[#ff1f57]/10 pb-4 text-[#ff1f57]">
+                <div class="overflow-hidden">
+                    <h1 class="text-base md:text-2xl font-bold tracking-tighter uppercase truncate md:whitespace-normal">
+                        Sequência_Autenticação
+                    </h1>
+                    <p class="text-[8px] md:text-[9px] mt-1 uppercase text-[#7289a3] opacity-70">
+                        Usuário: Anderson_Ribeiro.sys
+                    </p>
                 </div>
+                <div class="text-2xl md:text-5xl font-bold leading-none ml-4" id="load-percent">
+                    0%
+                </div>
+            </div>
                 <div class="h-0.5 bg-[#0a0f1d] relative mb-4">
                     <div id="progress-bar-fill" class="absolute inset-0 bg-[#ff1f57] w-0 shadow-[0_0_15px_#ff1f57]"></div>
                 </div>
@@ -166,36 +250,47 @@
             <h2 class="session-title text-[#ff1f57] font-bold uppercase mb-20 tracking-widest text-lg">Stack_Tecnologica_</h2>
             <div id="stack-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 
-                <div class="stack-card bg-[#050812] border border-[#ff1f57]/10 p-6 hover:border-[#ff1f57]/50 transition-all duration-300 group relative overflow-hidden">
+                <div class="stack-card bg-[#050812] border border-[#ff1f57]/10 p-6 hover:border-[#ff1f57]/50 group relative overflow-hidden">
                     <div class="flex justify-between items-center mb-4">
                         <i class="fab fa-java text-3xl text-[#ff1f57]"></i>
-                        <span class="text-[10px] text-white/40">AVANÇADO</span>
+                        <span class="text-[10px] text-white/40">BÁSICO</span>
                     </div>
                     <h3 class="text-white font-bold mb-2">JAVA / SPRING</h3>
                     <div class="h-1 bg-[#0a0f1d] w-full mt-4">
-                        <div class="h-full bg-[#ff1f57] shadow-[0_0_10px_#ff1f57]" style="width: 85%"></div>
+                        <div class="h-full bg-[#ff1f57] shadow-[0_0_10px_#ff1f57]" style="width: 20%"></div>
                     </div>
                 </div>
         
-                <div class="stack-card bg-[#050812] border border-[#ff1f57]/10 p-6 hover:border-[#ff1f57]/50 transition-all duration-300 relative overflow-hidden">
+                <div class="stack-card bg-[#050812] border border-[#ff1f57]/10 p-6 hover:border-[#ff1f57]/50 relative overflow-hidden">
                     <div class="flex justify-between items-center mb-4">
                         <i class="fab fa-js text-3xl text-[#ff1f57]"></i>
                         <span class="text-[10px] text-white/40">INTERMEDIÁRIO</span>
                     </div>
                     <h3 class="text-white font-bold mb-2">JAVASCRIPT / NODE</h3>
                     <div class="h-1 bg-[#0a0f1d] w-full mt-4">
-                        <div class="h-full bg-[#ff1f57] shadow-[0_0_10px_#ff1f57]" style="width: 70%"></div>
+                        <div class="h-full bg-[#ff1f57] shadow-[0_0_10px_#ff1f57]" style="width: 50%"></div>
                     </div>
                 </div>
         
-                <div class="stack-card bg-[#050812] border border-[#ff1f57]/10 p-6 hover:border-[#ff1f57]/50 transition-all duration-300 relative overflow-hidden">
+                <div class="stack-card bg-[#050812] border border-[#ff1f57]/10 p-6 hover:border-[#ff1f57]/50 relative overflow-hidden">
                     <div class="flex justify-between items-center mb-4">
                         <i class="fas fa-database text-3xl text-[#ff1f57]"></i>
-                        <span class="text-[10px] text-white/40">ESTRUTURAL</span>
+                        <span class="text-[10px] text-white/40">CONCEITUAL</span>
                     </div>
                     <h3 class="text-white font-bold mb-2">SQL / NO-SQL</h3>
                     <div class="h-1 bg-[#0a0f1d] w-full mt-4">
-                        <div class="h-full bg-[#ff1f57] shadow-[0_0_10px_#ff1f57]" style="width: 65%"></div>
+                        <div class="h-full bg-[#ff1f57] shadow-[0_0_10px_#ff1f57]" style="width: 15%"></div>
+                    </div>
+                </div>
+
+                <div class="stack-card bg-[#050812] border border-[#ff1f57]/10 p-6 hover:border-[#ff1f57]/50 relative overflow-hidden">
+                    <div class="flex justify-between items-center mb-4">
+                        <i class="fa-brands fa-react text-3xl text-[#ff1f57]"></i>
+                        <span class="text-[10px] text-white/40">INTERMEDIÁRIO</span>
+                    </div>
+                    <h3 class="text-white font-bold mb-2">Frontend / React</h3>
+                    <div class="h-1 bg-[#0a0f1d] w-full mt-4">
+                        <div class="h-full bg-[#ff1f57] shadow-[0_0_10px_#ff1f57]" style="width: 40%"></div>
                     </div>
                 </div>
             </div>
@@ -203,25 +298,28 @@
 
         <section id="projetos" class="py-32 border-b border-[#ff1f57]/5 reveal-section overflow-hidden">
             <h2 class="session-title text-[#ff1f57] font-bold uppercase mb-24 tracking-widest text-lg">Projetos_Ativos_</h2>
+            
             <div class="perspective w-full h-[500px] relative flex items-center justify-center">
                 <div id="carousel" class="preserve-3d w-72 h-96 relative">
+                    
                     <div class="card absolute inset-0 w-full h-full preserve-3d" data-index="0">
                         <div class="card-inner relative w-full h-full preserve-3d cursor-pointer">
                             <div class="backface-hidden absolute inset-0 bg-[#050812] border border-[#ff1f57]/20 rounded-xl p-6 flex flex-col justify-between shadow-[0_0_30px_rgba(255,31,87,0.1)]">
                                 <div class="h-40 bg-gradient-to-br from-[#ff1f57]/10 to-transparent rounded-lg flex items-center justify-center border border-[#ff1f57]/10">
-                                    <i class="fas fa-network-wired text-4xl text-[#ff1f57]"></i>
+                                    <i class="fa-brands fa-css3-alt text-5xl text-[#ff1f57]"></i>
                                 </div>
                                 <div>
-                                    <h3 class="text-white font-bold text-xl uppercase tracking-tighter">Nexus Gateway</h3>
-                                    <p class="text-[#7289a3] text-xs mt-2 uppercase tracking-widest">Backend / Java</p>
+                                    <h3 class="text-white font-bold text-xl uppercase tracking-tighter">Web Color</h3>
+                                    <p class="text-[#7289a3] text-xs mt-2 uppercase tracking-widest">Frontend / JavaScript</p>
                                 </div>
                             </div>
                             <div class="backface-hidden absolute inset-0 bg-[#0a0f1d] border-2 border-[#ff1f57] rounded-xl p-6 flex flex-col justify-center text-center [transform:rotateY(180deg)]">
-                                <p class="text-sm text-white leading-relaxed font-mono">Processamento de dados massivos em tempo real com Spring Boot.</p>
-                                <a href="https://github.com/Nephyro" target="_blank" class="mt-4 text-[10px] text-[#ff1f57] font-bold uppercase hover:underline">Ver Código _</a>
+                                <p class="text-sm text-white leading-relaxed font-mono">Projeto focado em criar paletas de cores para aplicações web.</p>
+                                <a href="https://nephyro.github.io/web-color/" target="_blank" class="mt-4 text-[10px] text-[#ff1f57] font-bold uppercase hover:underline">Projeto _</a>
                             </div>
                         </div>
                     </div>
+
                     <div class="card absolute inset-0 w-full h-full preserve-3d" data-index="1">
                         <div class="card-inner relative w-full h-full preserve-3d cursor-pointer">
                             <div class="backface-hidden absolute inset-0 bg-[#050812] border border-[#ff1f57]/20 rounded-xl p-6 flex flex-col justify-between shadow-[0_0_30px_rgba(255,31,87,0.1)]">
@@ -234,11 +332,12 @@
                                 </div>
                             </div>
                             <div class="backface-hidden absolute inset-0 bg-[#0a0f1d] border-2 border-[#ff1f57] rounded-xl p-6 flex flex-col justify-center text-center [transform:rotateY(180deg)]">
-                                <p class="text-sm text-white leading-relaxed font-mono">Sandbox procedural focado em estética de espaços liminais.</p>
-                                <a href="https://github.com/Nephyro" target="_blank" class="mt-4 text-[10px] text-[#ff1f57] font-bold uppercase hover:underline">Acessar _</a>
+                                <p class="text-sm text-white leading-relaxed font-mono">Sandbox procedural com foco em processamento leve.</p>
+                                <a href="https://nephyro.github.io/teste_rapido/" target="_blank" class="mt-4 text-[10px] text-[#ff1f57] font-bold uppercase hover:underline">Acessar _</a>
                             </div>
                         </div>
                     </div>
+
                     <div class="card absolute inset-0 w-full h-full preserve-3d" data-index="2">
                         <div class="card-inner relative w-full h-full preserve-3d cursor-pointer">
                             <div class="backface-hidden absolute inset-0 bg-[#050812] border border-[#ff1f57]/20 rounded-xl p-6 flex flex-col justify-between shadow-[0_0_30px_rgba(255,31,87,0.1)]">
@@ -246,19 +345,54 @@
                                     <i class="fas fa-microchip text-4xl text-[#ff1f57]"></i>
                                 </div>
                                 <div>
-                                    <h3 class="text-white font-bold text-xl uppercase tracking-tighter">Core API</h3>
+                                    <h3 class="text-white font-bold text-xl uppercase tracking-tighter">API de estados</h3>
                                     <p class="text-[#7289a3] text-xs mt-2 uppercase tracking-widest">REST / Node.js</p>
                                 </div>
                             </div>
                             <div class="backface-hidden absolute inset-0 bg-[#0a0f1d] border-2 border-[#ff1f57] rounded-xl p-6 flex flex-col justify-center text-center [transform:rotateY(180deg)]">
-                                <p class="text-sm text-white leading-relaxed font-mono">Arquitetura robusta para gerenciamento de microserviços.</p>
-                                <a href="https://github.com/Nephyro" target="_blank" class="mt-4 text-[10px] text-[#ff1f57] font-bold uppercase hover:underline">GitHub _</a>
+                                <p class="text-sm text-white leading-relaxed font-mono">Dados de estados e cidades pronta para consumo.</p>
+                                <a href="https://github.com/Nephyro/primeira-api" target="_blank" class="mt-4 text-[10px] text-[#ff1f57] font-bold uppercase hover:underline">GitHub _</a>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-            <p class="text-center text-[#7289a3] text-[9px] uppercase tracking-[0.5em] mt-12 animate-pulse">Arraste para girar // Clique para detalhes</p>
+
+                    <div class="card absolute inset-0 w-full h-full preserve-3d" data-index="3">
+                        <div class="card-inner relative w-full h-full preserve-3d cursor-pointer">
+                            <div class="backface-hidden absolute inset-0 bg-[#050812] border border-[#ff1f57]/20 rounded-xl p-6 flex flex-col justify-between shadow-[0_0_30px_rgba(255,31,87,0.1)]">
+                                <div class="h-40 bg-gradient-to-br from-[#ff1f57]/10 to-transparent rounded-lg flex items-center justify-center border border-[#ff1f57]/10">
+                                    <i class="fas fa-microchip text-4xl text-[#ff1f57]"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-white font-bold text-xl uppercase tracking-tighter">API de WhatsApp</h3>
+                                    <p class="text-[#7289a3] text-xs mt-2 uppercase tracking-widest">REST / Node.js</p>
+                                </div>
+                            </div>
+                            <div class="backface-hidden absolute inset-0 bg-[#0a0f1d] border-2 border-[#ff1f57] rounded-xl p-6 flex flex-col justify-center text-center [transform:rotateY(180deg)]">
+                                <p class="text-sm text-white leading-relaxed font-mono">Integração para gerenciamento de contatos via endpoints.</p>
+                                <a href="https://github.com/Nephyro/whatsappAPI" target="_blank" class="mt-4 text-[10px] text-[#ff1f57] font-bold uppercase hover:underline">GitHub _</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card absolute inset-0 w-full h-full preserve-3d" data-index="4">
+                        <div class="card-inner relative w-full h-full preserve-3d cursor-pointer">
+                            <div class="backface-hidden absolute inset-0 bg-[#050812] border border-[#ff1f57]/20 rounded-xl p-6 flex flex-col justify-between shadow-[0_0_30px_rgba(255,31,87,0.1)]">
+                                <div class="h-40 bg-gradient-to-br from-[#ff1f57]/10 to-transparent rounded-lg flex items-center justify-center border border-[#ff1f57]/10">
+                                    <i class="fa-solid fa-triangle-exclamation text-4xl text-[#ff1f57]"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-white font-bold text-xl uppercase tracking-tighter">Em breve</h3>
+                                    <p class="text-[#7289a3] text-xs mt-2 uppercase tracking-widest">Aguardando...</p>
+                                </div>
+                            </div>
+                            <div class="backface-hidden absolute inset-0 bg-[#0a0f1d] border-2 border-[#ff1f57] rounded-xl p-6 flex flex-col justify-center text-center [transform:rotateY(180deg)]">
+                                <p class="text-sm text-white leading-relaxed font-mono">Aguardando lançamento...</p>
+                                <a href="#" target="_blank" class="mt-4 text-[10px] text-[#ff1f57] font-bold uppercase hover:underline">GitHub _</a>
+                            </div>
+                        </div>
+                    </div>
+
+                </div> </div> <p class="text-center text-[#7289a3] text-[9px] uppercase tracking-[0.5em] mt-12 animate-pulse">Arraste para girar // Clique para detalhes</p>
         </section>
 
         <section class="py-32 reveal-section">
@@ -296,7 +430,7 @@
                         <a href="https://wa.me/5511991606429" target="_blank" class="hud-tag hover:bg-[#ff1f57] hover:text-white transition">WhatsApp</a>
                     </div>
                 </div>
-                <div class="mt-20 text-center text-[9px] opacity-20 uppercase tracking-[1em]">Carapicuíba - SP // 2026</div>
+                <div class="mt-20 text-center text-[9px] opacity-20 uppercase tracking-[1em]">Copyright © 2026 || Todos os direitos reservados</div>
             </div>
         </footer>
     </div>

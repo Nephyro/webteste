@@ -15,9 +15,6 @@ window.addEventListener('load', () => {
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
     const mobileMenu = document.getElementById('mobile-menu');
 
-
-
-
     // --- 1. NAVBAR (Comportamento de Scroll) ---
     let lastScrollTop = 0;
     window.addEventListener('scroll', () => {
@@ -68,7 +65,7 @@ window.addEventListener('load', () => {
             if (i < name.length) {
                 const span = document.createElement('span');
                 const char = name.charAt(i);
-                if (['R', 'B', 'A'].includes(char) && Math.random() > 0.4) span.className = 'neon-flicker';
+                if (['R', 'B', 'A', 'S', 'D'].includes(char) && Math.random() > 0.4) span.className = 'neon-flicker';
                 span.textContent = char;
                 titleContainer.appendChild(span);
                 i++; setTimeout(step, 85);
@@ -77,7 +74,7 @@ window.addEventListener('load', () => {
         step();
     }
 
-    // --- 5. PROGRESSO DO CARREGAMENTO ---
+    // --- 5. PROGRESSO DO CARREGAMENTO (ALTERADO PARA DESTRAVAR SCROLL) ---
     let progress = 0;
     const bootInterval = setInterval(() => {
         progress += Math.floor(Math.random() * 12) + 1;
@@ -85,17 +82,23 @@ window.addEventListener('load', () => {
             progress = 100; 
             clearInterval(bootInterval); 
             clearInterval(cascadeInterval);
+            
             setTimeout(() => { 
-                loader.style.opacity = '0'; 
+                if(loader) loader.style.opacity = '0'; 
+                
                 setTimeout(() => { 
-                    loader.remove(); 
-                    container.classList.remove('opacity-0', 'translate-y-10'); 
+                    if(loader) loader.remove(); 
+                    
+                    // --- ALTERAÇÃO AQUI: Libera o scroll apenas quando o loader some ---
+                    document.body.classList.remove('is-loading'); 
+                    
+                    if(container) container.classList.remove('opacity-0', 'translate-y-10'); 
                     typeFullTitle();
                 }, 800); 
             }, 500);
         }
-        percentEl.innerText = `${progress}%`; 
-        progressBarFill.style.width = `${progress}%`; 
+        if(percentEl) percentEl.innerText = `${progress}%`; 
+        if(progressBarFill) progressBarFill.style.width = `${progress}%`; 
     }, 90);
 
     // --- 6. ROLETA 3D DE PROJETOS ---
@@ -104,7 +107,7 @@ window.addEventListener('load', () => {
     if (carousel && cards.length > 0) {
         let currentIndex = 0;
         const angleStep = 360 / cards.length;
-        const radius = 350; 
+        const radius = window.innerWidth < 768 ? 200 : 350; 
         let isDragging = false, startX = 0, currentDragDistance = 0;
 
         cards.forEach((card, i) => {
@@ -156,18 +159,17 @@ window.addEventListener('load', () => {
         { text: '  File "hello_world.py", line 1, in <module>', color: "#ef4444", type: "output" },
         { text: "PermissionError: [Errno 13] Permission denied", color: "#ef4444", type: "output" },
         { text: "anderson@linux:~$ ", color: "#60a5fa", type: "prompt" },
-        { text: "...", color: "#fff", type: "input", delay: 1000 }, // Pausa dramática
+        { text: "...", color: "#fff", type: "input", delay: 1000 },
         { text: "sudo !!", color: "#fff", type: "input", delay: 150 },
-        { text: "[sudo] password for developer: **********", color: "#7289a3", type: "input", delay: 30 },
+        { text: "[sudo] password for developer: **********", color: "#7289a3", type: "input", delay: 50 },
         { text: "Hello World!", color: "#f1fa8c", type: "success" } 
     ];
     
-    let pIdx = 0;
     let isTerminalTyping = false;
     
     async function typeTerminal() {
         const terminalEl = document.getElementById('terminal-code');
-        const cursor = document.getElementById('terminal-cursor'); // Pegamos o cursor
+        const cursor = document.getElementById('terminal-cursor');
         
         if (!terminalEl || isTerminalTyping) return;
         isTerminalTyping = true;
@@ -183,67 +185,56 @@ window.addEventListener('load', () => {
             terminalEl.appendChild(span);
     
             if (line.type === "input") {
-                // Colocamos o cursor DENTRO do span para ele ficar colado no texto
                 span.appendChild(cursor); 
-    
                 for (const char of line.text) {
-                    // Inserimos o texto ANTES do cursor
                     const charNode = document.createTextNode(char);
                     span.insertBefore(charNode, cursor); 
-                    
                     await new Promise(r => setTimeout(r, line.delay || 50));
                 }
-                
-                // Após terminar a linha, podemos deixar o cursor ali ou mover para a próxima
                 terminalEl.appendChild(document.createElement('br'));
             } else {
                 span.textContent = line.text;
                 if (line.type !== "prompt") {
                     terminalEl.appendChild(document.createElement('br'));
                 }
-                // Move o cursor para o final da última ação
                 terminalEl.appendChild(cursor);
             }
-    
             await new Promise(r => setTimeout(r, 600));
-            
-            const container = document.getElementById('terminal-container');
-            container.scrollTop = container.scrollHeight;
+            const containerTerm = document.getElementById('terminal-container');
+            if(containerTerm) containerTerm.scrollTop = containerTerm.scrollHeight;
         }
     }
 
-    // --- 8. MOUSE EFFECT (Luz de Fundo e Tilt nos Cards) ---
-document.addEventListener('mousemove', (e) => {
-    const bgLight = document.getElementById('bg-light');
-    const cursor = document.getElementById('custom-cursor');
-    const stackCards = document.querySelectorAll('.stack-card');
+    // --- 8. MOUSE EFFECT ---
+    document.addEventListener('mousemove', (e) => {
+        if (window.innerWidth <= 1024) return;
+        
+        const bgLight = document.getElementById('bg-light');
+        const cursor = document.getElementById('custom-cursor');
+        const stackCards = document.querySelectorAll('.stack-card');
 
-    // Move a luz de fundo e o cursor
-    if (bgLight) bgLight.style.background = `radial-gradient(circle 250px at ${e.clientX}px ${e.clientY}px, transparent 0%, rgba(2, 4, 10, 1) 100%)`;
-    if (cursor) { 
-        cursor.style.left = `${e.clientX}px`; 
-        cursor.style.top = `${e.clientY}px`; 
-    }
-
-    // Efeito de Inclinação (Tilt)
-    stackCards.forEach(card => {
-        const rect = card.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-
-        // Se o mouse estiver dentro do card
-        if (x > 0 && y > 0 && x < rect.width && y < rect.height) {
-            const rotateX = (y / rect.height - 0.5) * -15; // Inclinação vertical
-            const rotateY = (x / rect.width - 0.5) * 15;   // Inclinação horizontal
-            
-            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
-            card.style.borderColor = "rgba(255, 31, 87, 0.6)";
-        } else {
-            card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
-            card.style.borderColor = "rgba(255, 31, 87, 0.1)";
+        if (bgLight) bgLight.style.background = `radial-gradient(circle 250px at ${e.clientX}px ${e.clientY}px, transparent 0%, rgba(2, 4, 10, 1) 100%)`;
+        if (cursor) { 
+            cursor.style.left = `${e.clientX}px`; 
+            cursor.style.top = `${e.clientY}px`; 
         }
+
+        stackCards.forEach(card => {
+            const rect = card.getBoundingClientRect();
+            if (e.clientX > rect.left - 50 && e.clientX < rect.right + 50 &&
+                e.clientY > rect.top - 50 && e.clientY < rect.bottom + 50) {
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const rotateX = (y / rect.height - 0.5) * -25; 
+                const rotateY = (x / rect.width - 0.5) * 25;   
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05, 1.05, 1.05)`;
+                card.style.borderColor = "rgba(255, 31, 87, 0.8)";
+            } else {
+                card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
+                card.style.borderColor = "rgba(255, 31, 87, 0.1)";
+            }
+        });
     });
-});
 
     // --- 9. MENU MOBILE ---
     if (mobileMenuBtn && mobileMenu) {
@@ -263,7 +254,7 @@ document.addEventListener('mousemove', (e) => {
         });
     }
 
-    // --- 10. OBSERVER (Reveal de Seções) ---
+    // --- 10. OBSERVER ---
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => { 
             if(entry.isIntersecting) { 

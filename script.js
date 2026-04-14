@@ -265,3 +265,104 @@ window.addEventListener('load', () => {
     }, { threshold: 0.1 });
     document.querySelectorAll('.reveal-section, #terminal-code').forEach(s => observer.observe(s));
 });
+
+let player;
+let isMuted = true;
+let musicStarted = false;
+
+// 1. Carrega a API do YouTube de forma assíncrona
+const tag = document.createElement('script');
+tag.src = "https://www.youtube.com/iframe_api";
+const firstScriptTag = document.getElementsByTagName('script')[0];
+firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+// 2. Esta função é chamada automaticamente quando a API do YT está pronta
+function onYouTubeIframeAPIReady() {
+    player = new YT.Player('player', {
+        height: '0',
+        width: '0',
+        videoId: 'Osk6gX6R_bA',
+        playerVars: {
+            'autoplay': 1,
+            'loop': 1,
+            'playlist': 'Osk6gX6R_bA', // Necessário para o loop funcionar
+            'origin': window.location.origin,
+            'controls': 0,
+            'showinfo': 0,
+            'rel': 0,
+            'enablejsapi': 1
+        },
+        events: {
+            'onReady': (event) => {
+                event.target.mute(); // Começa mudo para o navegador permitir o play
+                event.target.playVideo();
+            }
+        }
+    });
+}
+
+// 3. Gerencia o ícone e o estado do som
+function toggleSound() {
+    const soundIcon = document.getElementById('sound-icon');
+    const barsContainer = document.getElementById('bars'); // Faltava essa linha
+    const soundBtn = document.getElementById('sound-control');
+
+    if (!player) return;
+
+    if (isMuted) {
+        player.unMute();
+        player.setVolume(5);
+        
+        // Visual: Mostra barras e esconde ícone
+        soundIcon.classList.add('hidden');
+        barsContainer.classList.remove('hidden');
+        soundBtn.classList.add('playing-pulse'); // Adiciona o pulso que você criou
+    } else {
+        player.mute();
+        
+        // Visual: Mostra ícone e esconde barras
+        soundIcon.className = 'fas fa-volume-mute';
+        soundIcon.classList.remove('hidden');
+        barsContainer.classList.add('hidden');
+        soundBtn.classList.remove('playing-pulse');
+    }
+    isMuted = !isMuted;
+}
+
+// 4. Ativa o som na primeira interação do usuário
+function handleFirstMusicInteraction() {
+    if (!musicStarted && player) {
+        const soundIcon = document.getElementById('sound-icon');
+        const barsContainer = document.getElementById('bars');
+        const soundBtn = document.getElementById('sound-control');
+
+        player.unMute();
+        player.setVolume(5);
+        
+        soundIcon.classList.add('hidden');
+        barsContainer.classList.remove('hidden');
+        soundBtn.classList.add('playing-pulse');
+
+        isMuted = false;
+        musicStarted = true;
+        
+        document.removeEventListener("mousedown", handleFirstMusicInteraction);
+        document.removeEventListener("keydown", handleFirstMusicInteraction);
+        document.removeEventListener("touchstart", handleFirstMusicInteraction);
+    }
+}
+
+// 5. Configuração dos Eventos do Botão
+document.getElementById('sound-control').addEventListener('click', (e) => {
+    e.stopPropagation(); // Evita que o clique no botão dispare outras funções indesejadas
+    if (!musicStarted) {
+        handleFirstMusicInteraction();
+    } else {
+        toggleSound();
+    }
+});
+
+// Detecta a primeira interação para soltar o som
+document.addEventListener("mousedown", handleFirstMusicInteraction);
+document.addEventListener("keydown", handleFirstMusicInteraction);
+document.addEventListener("touchstart", handleFirstMusicInteraction);

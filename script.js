@@ -343,8 +343,14 @@ function handleFirstMusicInteraction() {
         barsContainer.classList.remove('hidden');
         soundBtn.classList.add('playing-pulse');
 
-        isMuted = false;
+        setTimeout(() => {
+            player.playVideo();
+            player.unMute();
+            player.setVolume(5);
+        }, 100); // 100ms de delay costumam "enganar" o bloqueio do Chrome
+
         musicStarted = true;
+        isMuted = false;
         
         document.removeEventListener("mousedown", handleFirstMusicInteraction);
         document.removeEventListener("keydown", handleFirstMusicInteraction);
@@ -355,6 +361,12 @@ function handleFirstMusicInteraction() {
 // 5. Configuração dos Eventos do Botão
 document.getElementById('sound-control').addEventListener('click', (e) => {
     e.stopPropagation(); // Evita que o clique no botão dispare outras funções indesejadas
+
+    // Se o player existe mas o Chrome bloqueou o autoplaer
+    if(player && typeof player.playVideo === 'function') {
+        player.playVideo(); // Garante que o player foi dado por um clique
+    }
+
     if (!musicStarted) {
         handleFirstMusicInteraction();
     } else {

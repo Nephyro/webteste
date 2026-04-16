@@ -173,6 +173,170 @@
             100% { height: 16px; }
         }
 
+        /* Estilo específico para o cursor do terminal */
+        /* Cursor piscando (padrão) */
+        #terminal-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 18px;
+            background-color: #ff1f57;
+            margin-left: 4px;
+            vertical-align: middle;
+            animation: terminal-blink 1.2s step-end infinite;
+        }
+
+        /* Classe que vamos adicionar via JS durante a digitação */
+        #terminal-cursor.typing {
+            animation: none !important;
+            opacity: 1 !important;
+        }
+
+        @keyframes terminal-blink {
+            from, to { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        @keyframes eq {
+            0%, 100% { height: 6px; }
+            50% { height: 24px; }
+        }
+        .eq-bar {
+            animation: eq 1s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+            background: linear-gradient(to top, #ff1f57, #ffffff); /* Cores do seu tema */
+        }
+        .b1 { animation-duration: 0.8s; }
+        .b2 { animation-duration: 1.2s; animation-delay: 0.1s; }
+        .b3 { animation-duration: 0.9s; animation-delay: 0.2s; }
+        .b4 { animation-duration: 1.1s; animation-delay: 0.3s; }
+        .b5 { animation-duration: 1.0s; animation-delay: 0.4s; }
+
+        #sound-control {
+            position: fixed !important;
+            bottom: 24px !important;
+            left: 24px !important;
+            z-index: 9999 !important;
+            /* Força o navegador a tratar o botão fora de qualquer contexto de renderização do body */
+            transform: scale(0.60) translateZ(0); 
+
+            /* Garante que o ponto de ancoragem seja o canto inferior esquerdo */
+            transform-origin: bottom left;
+        }
+
+        /* --- MENU MOBILE: CONTAINER --- */
+        #mobile-menu {
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 72px; /* Ajuste conforme a altura da sua navbar */
+            right: 0;
+            width: 70%; /* Largura do menu lateral */
+            height: auto;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateX(100%);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        #mobile-menu.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateX(0);
+        }
+
+        /* --- BOTÕES CYBERPUNK (MOBILE) --- */
+        .mobile-nav-link {
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: rgba(10, 15, 29, 0.9);
+            color: #7289a3;
+            border: 1px solid rgba(255, 31, 87, 0.2);
+            /* O corte poligonal */
+            clip-path: polygon(0 0, 92% 0, 100% 25%, 100% 100%, 8% 100%, 0 75%);
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            margin-bottom: 12px;
+        }
+
+        /* Estado de HOVER ou SESSÃO ATIVA */
+        .mobile-nav-link:hover, 
+        .mobile-nav-link.active-section {
+            background: rgba(255, 31, 87, 0.15) !important;
+            border-color: #ff1f57 !important;
+            color: #fff !important;
+            transform: translateX(-10px) !important;
+            box-shadow: -5px 0 20px rgba(255, 31, 87, 0.3);
+        }
+
+        /* Estilo específico para o texto quando ativo */
+        .mobile-nav-link.active-section span:last-child {
+            color: #fff !important;
+            text-shadow: 2px 0 #ff1f57, -1px 0 #00ffff; /* Efeito Glitch cromático */
+            letter-spacing: 0.1em;
+        }
+
+        /* Ativar o ícone quando estiver na sessão */
+        .mobile-nav-link.active-section i {
+            opacity: 1 !important;
+            color: #fff !important;
+        }
+
+        /* Seletor específico para o Terminal no Contato */
+        .mobile-nav-link.active-section i.fa-terminal {
+            animation: cyberpunk-pulse 1s infinite;
+        }
+
+        @keyframes cyberpunk-pulse {
+            0% { opacity: 1; filter: brightness(1); }
+            50% { opacity: 0.6; filter: brightness(1.5); }
+            100% { opacity: 1; filter: brightness(1); }
+        }
+
+        /* --- ESTILO CYBERPUNK PARA TODOS OS LINKS DA NAV --- */
+        .nav-link-cyber {
+            position: relative;
+            display: flex;
+            align-items: center;
+            padding: 6px 16px; /* Menor que o mobile para caber na horizontal */
+            background: rgba(10, 15, 29, 0.7);
+            color: #7289a3;
+            border: 1px solid rgba(255, 31, 87, 0.2);
+            /* Corte poligonal sutil */
+            clip-path: polygon(0 0, 100% 0, 100% 70%, 85% 100%, 0 100%);
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            font-family: 'Inter', sans-serif; /* Use sua fonte principal */
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+        }
+
+        /* Efeito de Hover e Sessão Ativa */
+        .nav-link-cyber:hover, 
+        .nav-link-cyber.active-section {
+            background: rgba(255, 31, 87, 0.1) !important;
+            border-color: #ff1f57 !important;
+            color: #fff !important;
+            transform: translateY(-2px); /* No PC, ele sobe em vez de ir pro lado */
+            box-shadow: 0 5px 15px rgba(255, 31, 87, 0.2);
+        }
+
+        /* Detalhe da barra inferior neon no PC */
+        .nav-link-cyber::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: #ff1f57;
+            transition: width 0.3s ease;
+        }
+
+        .nav-link-cyber:hover::after,
+        .nav-link-cyber.active-section::after {
+            width: 100%;
+        }
 
     </style>
 </head>
@@ -185,20 +349,53 @@
                 <span class="text-[#ff1f57] group-hover:text-white transition-all duration-300">Ribeiro</span>
             </a>
             <div class="hidden md:flex gap-8">
-                <a href="#sobre" class="nav-link text-[10px] uppercase tracking-widest hover:text-[#ff1f57] transition-all">Sobre</a>
-                <a href="#habilidades" class="nav-link text-[10px] uppercase tracking-widest hover:text-[#ff1f57] transition-all">Habilidades</a>
-                <a href="#projetos" class="nav-link text-[10px] uppercase tracking-widest hover:text-[#ff1f57] transition-all">Projetos</a>
-                <a href="#contato" class="nav-link text-[10px] uppercase tracking-widest hover:text-[#ff1f57] transition-all">Contato</a>
+                <a href="#sobre" class="nav-link nav-link-cyber text-[10px] uppercase tracking-widest hover:text-[#ff1f57] transition-all">Sobre</a>
+                <a href="#habilidades" class="nav-link nav-link-cyber text-[10px] uppercase tracking-widest hover:text-[#ff1f57] transition-all">Habilidades</a>
+                <a href="#projetos" class="nav-link nav-link-cyber text-[10px] uppercase tracking-widest hover:text-[#ff1f57] transition-all">Projetos</a>
+                <a href="#contato" class="nav-link nav-link-cyber text-[10px] uppercase tracking-widest hover:text-[#ff1f57] transition-all">Contato</a>
             </div>
             <button id="mobile-menu-btn" class="md:hidden text-[#ff1f57] text-xl outline-none">
                 <i class="fas fa-bars"></i>
             </button>
         </div>
-        <div id="mobile-menu" class="hidden flex-col bg-[#02040a]/95 backdrop-blur-xl border-b border-[#ff1f57]/20 w-full absolute top-full left-0 px-8 py-6 space-y-4 md:hidden">
-            <a href="#sobre" class="mobile-nav-link text-[10px] uppercase tracking-widest hover:text-[#ff1f57] block py-2 border-b border-[#ff1f57]/5">Sobre</a>
-            <a href="#habilidades" class="mobile-nav-link text-[10px] uppercase tracking-widest hover:text-[#ff1f57] block py-2 border-b border-[#ff1f57]/5">Habilidades</a>
-            <a href="#projetos" class="mobile-nav-link text-[10px] uppercase tracking-widest hover:text-[#ff1f57] block py-2 border-b border-[#ff1f57]/5">Projetos</a>
-            <a href="#contato" class="mobile-nav-link text-[10px] uppercase tracking-widest hover:text-[#ff1f57] block py-2">Contato</a>
+        <div id="mobile-menu" class="bg-[#02040a]/98 backdrop-blur-2xl px-6 py-10 space-y-4 md:hidden z-[6000]">
+    
+            <a href="#sobre" class="mobile-nav-link group relative flex items-center p-4 bg-[#0a0f1d] border border-[#ff1f57]/10 rounded-lg overflow-hidden transition-all active:scale-95">
+                <div class="absolute left-0 top-0 h-full w-1 bg-[#ff1f57] opacity-50 group-hover:opacity-100 shadow-[0_0_10px_#ff1f57]"></div>
+                <div class="flex-1">
+                    <span class="block text-[8px] text-[#ff1f57] font-bold tracking-[0.2em] mb-1">SECTION_01</span>
+                    <span class="block text-xs text-white uppercase tracking-widest font-bold">Sobre_Mim</span>
+                </div>
+                <i class="fas fa-id-badge text-[#7289a3] group-hover:text-white transition-colors opacity-30"></i>
+            </a>
+
+            <a href="#habilidades" class="mobile-nav-link group relative flex items-center p-4 bg-[#0a0f1d] border border-[#ff1f57]/10 rounded-lg overflow-hidden transition-all active:scale-95">
+                <div class="absolute left-0 top-0 h-full w-1 bg-[#ff1f57] opacity-50 group-hover:opacity-100 shadow-[0_0_10px_#ff1f57]"></div>
+                <div class="flex-1">
+                    <span class="block text-[8px] text-[#ff1f57] font-bold tracking-[0.2em] mb-1">SECTION_02</span>
+                    <span class="block text-xs text-white uppercase tracking-widest font-bold">Hard_Skills</span>
+                </div>
+                <i class="fas fa-microchip text-[#7289a3] group-hover:text-white transition-colors opacity-30"></i>
+            </a>
+
+            <a href="#projetos" class="mobile-nav-link group relative flex items-center p-4 bg-[#0a0f1d] border border-[#ff1f57]/10 rounded-lg overflow-hidden transition-all active:scale-95">
+                <div class="absolute left-0 top-0 h-full w-1 bg-[#ff1f57] opacity-50 group-hover:opacity-100 shadow-[0_0_10px_#ff1f57]"></div>
+                <div class="flex-1">
+                    <span class="block text-[8px] text-[#ff1f57] font-bold tracking-[0.2em] mb-1">SECTION_03</span>
+                    <span class="block text-xs text-white uppercase tracking-widest font-bold">Portfolio</span>
+                </div>
+                <i class="fas fa-code-branch text-[#7289a3] group-hover:text-white transition-colors opacity-30"></i>
+            </a>
+
+            <a href="#contato" class="mobile-nav-link group relative flex items-center p-4 overflow-hidden transition-all active:scale-95">
+                <div class="absolute left-0 top-0 h-full w-1 bg-[#ff1f57] opacity-50 group-hover:opacity-100 shadow-[0_0_10px_#ff1f57]"></div>
+                <div class="flex-1">
+                    <span class="block text-[8px] text-[#ff1f57] font-bold tracking-[0.2em] mb-1">SECTION_04</span>
+                    <span class="block text-xs text-white uppercase tracking-widest font-bold">Contato_Direto</span>
+                </div>
+                <i class="fas fa-terminal text-[#7289a3] group-hover:text-white transition-colors opacity-30"></i>
+            </a>
+
         </div>
     </nav>
 
@@ -229,13 +426,37 @@
         </div>
     </div>
 
+    <audio id="bg-music" loop preload="auto">
+            <source src="musica.mp3" type="audio/mpeg">
+        </audio>
+
+        <button id="sound-control" class="group relative flex items-center justify-center w-20 h-20 rounded-[1.5rem] bg-gradient-to-b from-[#1e293b] to-[#0f172a] shadow-[0_20px_50px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.1)] border border-slate-800 transition-all duration-500 hover:scale-105 active:scale-95 fixed bottom-6 left-6 z-50">
+    
+            <div id="statusGlow" class="absolute inset-0 rounded-[1.5rem] bg-[#ff1f57]/20 blur-xl opacity-0 transition-opacity duration-700"></div>
+
+            <div id="mutedContent" class="flex flex-col items-center transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]">
+                <i id="sound-icon" class="fas fa-volume-mute text-slate-400 group-hover:text-white text-xl"></i>
+                <span class="text-[8px] font-bold tracking-[0.2em] text-slate-500 mt-1 uppercase">Mute</span>
+            </div>
+
+            <div id="bars" class="absolute flex items-end gap-[3px] h-6 opacity-0 translate-y-8 blur-md transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]">
+                <span class="eq-bar b1 w-[3px] rounded-full"></span>
+                <span class="eq-bar b2 w-[3px] rounded-full"></span>
+                <span class="eq-bar b3 w-[3px] rounded-full"></span>
+                <span class="eq-bar b4 w-[3px] rounded-full"></span>
+                <span class="eq-bar b5 w-[3px] rounded-full"></span>
+            </div>
+
+            <div id="led" class="absolute top-3 right-3 w-1.5 h-1.5 rounded-full bg-slate-700 shadow-[0_0_5px_rgba(0,0,0,0.5)] transition-all duration-500"></div>
+        </button>
+
     <div id="bg-light"></div>
     <div id="custom-cursor" class="fixed w-5 h-5 border-2 border-[#ff1f57] rounded-full pointer-events-none z-[9999] mix-blend-screen"></div>
 
     <div id="main-container" class="max-w-6xl mx-auto px-8 opacity-0 translate-y-10 transition-all duration-1000">
         
         <header id="inicio" class="pt-40 pb-24 border-b border-[#ff1f57]/10 relative">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-8">
+            <div class="flex flex-col md:flex-row items-center md:items-center justify-between gap-8">
                 <div class="space-y-4">
                     <div class="flex items-center gap-3">
                         <span class="hud-tag animate-pulse">Status: Online</span>
@@ -244,8 +465,10 @@
                     <h1 id="typewriter-name" class="text-white text-5xl md:text-8xl font-bold uppercase leading-tight min-h-[1.2em]"></h1>
                     <p class="text-xs uppercase tracking-[0.4em] opacity-50">Engenharia de Software // Arquitetura Back-End</p>
                 </div>
-                <div class="relative w-64 h-64 border-2 border-[#ff1f57]/30 overflow-hidden rounded-full shadow-2xl">
-                    <img src="https://media.licdn.com/dms/image/v2/D4D03AQFLbzVml-xLpg/profile-displayphoto-crop_800_800/B4DZ0IfwWBKoAI-/0/1773964039689?e=1776902400&v=beta&t=xUBVbu6IpyM0K35rXEW-x14cWpYQXSnuaYJAU6Umxx0" alt="Anderson Ribeiro" class="w-full h-full object-cover">
+                <div class="relative w-64 h-64 aspect-square border-2 border-[#ff1f57]/30 overflow-hidden rounded-full shadow-2xl flex-shrink-0 mx-auto md:mx-0">
+                    <img src="https://media.licdn.com/dms/image/v2/D4D03AQFLbzVml-xLpg/profile-displayphoto-crop_800_800/B4DZ0IfwWBKoAI-/0/1773964039689?e=1776902400&v=beta&t=xUBVbu6IpyM0K35rXEW-x14cWpYQXSnuaYJAU6Umxx0" 
+                         alt="Anderson Ribeiro" 
+                         class="w-full h-full object-cover">
                 </div>
             </div>
         </header>
@@ -357,6 +580,7 @@
                             </div>
                             <div class="backface-hidden absolute inset-0 bg-[#0a0f1d] border-2 border-[#ff1f57] rounded-xl p-6 flex flex-col justify-center text-center [transform:rotateY(180deg)]">
                                 <p class="text-sm text-white leading-relaxed font-mono">Sandbox procedural com foco em processamento leve.</p>
+                                <a href="https://github.com/Nephyro/teste_rapido" target="_blank" class="mt-4 text-[10px] text-[#ff1f57] font-bold uppercase hover:underline">Código_fonte _</a>
                                 <a href="https://nephyro.github.io/teste_rapido/" target="_blank" class="mt-4 text-[10px] text-[#ff1f57] font-bold uppercase hover:underline">Acessar _</a>
                             </div>
                         </div>
@@ -402,7 +626,7 @@
                         <div class="card-inner relative w-full h-full preserve-3d cursor-pointer">
                             <div class="backface-hidden absolute inset-0 bg-[#050812] border border-[#ff1f57]/20 rounded-xl p-6 flex flex-col justify-between shadow-[0_0_30px_rgba(255,31,87,0.1)]">
                                 <div class="h-40 bg-gradient-to-br from-[#ff1f57]/10 to-transparent rounded-lg flex items-center justify-center border border-[#ff1f57]/10">
-                                    <i class="fa-solid fa-triangle-exclamation text-4xl text-[#ff1f57]"></i>
+                                    <i class="fa-solid fa-user-secret text-4xl text-[#ff1f57]"></i>
                                 </div>
                                 <div>
                                     <h3 class="text-white font-bold text-xl uppercase tracking-tighter">Em breve</h3>
@@ -430,21 +654,13 @@
         
                 <div class="p-6 font-mono text-sm md:text-base leading-relaxed min-h-[300px]" id="terminal-container">
                     <div id="terminal-code" class="whitespace-pre-wrap"></div>
-                    <div id="terminal-cursor" class="inline-block w-2 h-5 bg-[#ff1f57] ml-1 align-middle animate-pulse"></div>
+                    <div id="terminal-cursor" class="inline-block w-2 h-5 bg-[#ff1f57] ml-1 align-middle"></div>
                 </div>
             </div>
         </section>
 
-        <div id="player" class="fixed -top-[1000px] pointer-events-none"></div>
+        
 
-        <button id="sound-control" class="fixed bottom-6 left-6 z-[100] w-12 h-12 rounded-full border border-[#ff1f57]/30 bg-[#02040a]/80 text-[#ff1f57] flex items-center justify-center hover:bg-[#ff1f57] hover:text-white transition-all duration-300 shadow-[0_0_15px_rgba(255,31,87,0.2)] group">
-            <div id="bars" class="hidden flex items-end gap-1 h-4">
-                <div class="bar-anim bg-[#ff1f57] w-1"></div>
-                <div class="bar-anim bg-[#ff1f57] w-1"></div>
-                <div class="bar-anim bg-[#ff1f57] w-1"></div>
-            </div>
-            <i id="sound-icon" class="fas fa-volume-mute"></i>
-        </button>
 
         <footer id="contato" class="footer-custom-bg py-24 mt-20 border-t border-[#ff1f57]/10">
             <div class="footer-content max-w-6xl mx-auto px-8">

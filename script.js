@@ -2,25 +2,87 @@
 if ('scrollRestoration' in history) {
     history.scrollRestoration = 'manual';
 }
-    
 window.scrollTo(0, 0);
 
+// Flag global para controle de estado da música
+let musicStarted = false;
+
 window.addEventListener('load', () => {
+    // --- ELEMENTOS DO DOM ---
     const loader = document.getElementById('loader');
     const container = document.getElementById('main-container');
     const percentEl = document.getElementById('load-percent');
     const progressBarFill = document.getElementById('progress-bar-fill');
     const cascadeWrapper = document.getElementById('cascade-wrapper');
     const navbar = document.getElementById('navbar');
-    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    
+    
+    // --- LÓGICA DO MENU MOBILE ---
+    const menuBtn = document.getElementById('mobile-menu-btn'); 
     const mobileMenu = document.getElementById('mobile-menu');
+
+        if (menuBtn && mobileMenu) {
+        menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            mobileMenu.classList.toggle('active'); // Alterna a classe de animação
+        });
+
+        const mobileLinks = document.querySelectorAll('.mobile-nav-link');
+        mobileLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.remove('active'); // Fecha suavemente ao clicar
+            });
+        });
+        
+        // Opcional: fecha o menu se clicar fora dele
+        document.addEventListener('click', (e) => {
+            if (!mobileMenu.contains(e.target) && !menuBtn.contains(e.target)) {
+                mobileMenu.classList.remove('active');
+            }
+        });
+    }
+    
+    
+    // Elementos de Áudio
+    const audio = document.getElementById('bg-music');
+    const soundBtn = document.getElementById('sound-control');
+    const soundIcon = document.getElementById('sound-icon');
+    const led = document.getElementById('led');
+    const glow = document.getElementById('statusGlow');
+    const mutedContent = document.getElementById('mutedContent');
+    const barsContainer = document.getElementById('bars');
 
     // --- 1. NAVBAR (Comportamento de Scroll) ---
     let lastScrollTop = 0;
+
+    // --- DETECTOR DE SESSÃO ATIVA (SCROLL SPY) ---
+    const sections = document.querySelectorAll("section, header");
+    const navLinks = document.querySelectorAll(".mobile-nav-link, .nav-link-cyber");
+
     window.addEventListener('scroll', () => {
+        // Lógica da Navbar (Esconder/Mostrar)
         let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        navbar.style.transform = (scrollTop > lastScrollTop && scrollTop > 100) ? "translateY(-100%)" : "translateY(0)";
-        lastScrollTop = scrollTop <= 0 ? 0 : scrollTop; 
+        if (navbar) {
+            navbar.style.transform = (scrollTop > lastScrollTop && scrollTop > 100) ? "translateY(-100%)" : "translateY(0)";
+        }
+        lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+
+        // Lógica do Scroll Spy (Sessão Ativa)
+        let current = "";
+        sections.forEach((section) => {
+            const sectionTop = section.offsetTop;
+            if (pageYOffset >= sectionTop - 150) {
+                current = section.getAttribute("id");
+            }
+        });
+
+        navLinks.forEach((link) => {
+            link.classList.remove("active-section");
+            // Verifica se o href do link corresponde à seção atual
+            if (current && link.getAttribute("href").includes(current)) {
+                link.classList.add("active-section");
+            }
+        });
     }, { passive: true });
 
     // --- 2. SCROLL SUAVE PARA LINKS ---
@@ -29,6 +91,11 @@ window.addEventListener('load', () => {
             const targetId = this.getAttribute('href');
             if (targetId.startsWith("#")) {
                 e.preventDefault();
+                
+                // Se for mobile, fecha o menu ao clicar (opcional, mas recomendado)
+                const mobileMenu = document.getElementById('mobile-menu');
+                if (mobileMenu) mobileMenu.classList.remove('active');
+
                 if (targetId === "#inicio") {
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                     return;
@@ -74,7 +141,7 @@ window.addEventListener('load', () => {
         step();
     }
 
-    // --- 5. PROGRESSO DO CARREGAMENTO (ALTERADO PARA DESTRAVAR SCROLL) ---
+    // --- 5. PROGRESSO DO CARREGAMENTO ---
     let progress = 0;
     const bootInterval = setInterval(() => {
         progress += Math.floor(Math.random() * 12) + 1;
@@ -85,13 +152,9 @@ window.addEventListener('load', () => {
             
             setTimeout(() => { 
                 if(loader) loader.style.opacity = '0'; 
-                
                 setTimeout(() => { 
                     if(loader) loader.remove(); 
-                    
-                    // --- ALTERAÇÃO AQUI: Libera o scroll apenas quando o loader some ---
                     document.body.classList.remove('is-loading'); 
-                    
                     if(container) container.classList.remove('opacity-0', 'translate-y-10'); 
                     typeFullTitle();
                 }, 800); 
@@ -101,14 +164,103 @@ window.addEventListener('load', () => {
         if(progressBarFill) progressBarFill.style.width = `${progress}%`; 
     }, 90);
 
-    // --- 6. ROLETA 3D DE PROJETOS ---
+    // --- 6. LÓGICA DE ÁUDIO (SINCRONIZADA) ---
+    function updateAudioVisuals(playing) {
+        if (playing) {
+            // Transição de conteúdo: Sai ícone, entra Equalizador
+            mutedContent.classList.add('opacity-0', '-translate-y-8', 'blur-md');
+            barsContainer.classList.remove('opacity-0', 'translate-y-8', 'blur-md');
+            barsContainer.classList.add('opacity-100', 'translate-y-0');
+
+            // Feedback de Hardware (LED e Brilho)
+            if (led) {
+                led.style.backgroundColor = '#ff1f57';
+                led.style.boxShadow = '0 0 8px #ff1f57';
+            }
+            if (glow) glow.style.opacity = '1';
+            
+            soundBtn.classList.add('shadow-[0_20px_50px_rgba(255,31,87,0.2)]');
+            soundBtn.style.borderColor = 'rgba(255, 31, 87, 0.4)';
+        } else {
+            // Volta ao estado de Mudo
+            mutedContent.classList.remove('opacity-0', '-translate-y-8', 'blur-md');
+            barsContainer.classList.add('opacity-0', 'translate-y-8', 'blur-md');
+            barsContainer.classList.remove('opacity-100', 'translate-y-0');
+
+            // Desliga Feedbacks
+            if (led) {
+                led.style.backgroundColor = '#334155'; // Cor slate-700
+                led.style.boxShadow = 'none';
+            }
+            if (glow) glow.style.opacity = '0';
+            
+            soundBtn.classList.remove('shadow-[0_20px_50px_rgba(255,31,87,0.2)]');
+            soundBtn.style.borderColor = 'rgba(255, 31, 87, 0.1)';
+        }
+    }
+
+    // Sincronização Automática
+    if (audio) {
+    // Força o loop nativo
+        audio.loop = true;
+
+        // EVENTO CHAVE: Reinicia antes do "silêncio" do arquivo (Gapless Trick)
+        audio.addEventListener('timeupdate', function() {
+            // Se faltar menos de 0.3 segundos para acabar, volta para o início
+            // Esse valor (0.3) pode ser ajustado dependendo do seu arquivo de áudio
+            const buffer = 0.3; 
+            if (this.currentTime > this.duration - buffer) {
+                this.currentTime = 0;
+                this.play();
+            }
+        });
+
+        audio.onplay = () => updateAudioVisuals(true);
+        audio.onpause = () => updateAudioVisuals(false);
+    }
+
+    function toggleSound() {
+        if (audio.paused) {
+            audio.volume = 0.05;
+            audio.play().catch(err => console.log("Erro ao tocar:", err));
+        } else {
+            audio.pause();
+        }
+    }
+
+    function handleFirstMusicInteraction() {
+        if (!musicStarted && audio) {
+            audio.volume = 0.05;
+            audio.play().then(() => {
+                musicStarted = true;
+                document.removeEventListener("mousedown", handleFirstMusicInteraction);
+                document.removeEventListener("keydown", handleFirstMusicInteraction);
+                document.removeEventListener("touchstart", handleFirstMusicInteraction);
+            }).catch(err => console.log("Aguardando interação real..."));
+        }
+    }
+
+    if (soundBtn) {
+        soundBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!musicStarted) handleFirstMusicInteraction();
+            else toggleSound();
+        });
+    }
+
+    document.addEventListener("mousedown", handleFirstMusicInteraction);
+    document.addEventListener("keydown", handleFirstMusicInteraction);
+    document.addEventListener("touchstart", handleFirstMusicInteraction);
+
+
+    // --- 7. ROLETA 3D DE PROJETOS ---
     const carousel = document.getElementById('carousel');
     const cards = document.querySelectorAll('.card');
     if (carousel && cards.length > 0) {
         let currentIndex = 0;
         const angleStep = 360 / cards.length;
         const radius = window.innerWidth < 768 ? 200 : 350; 
-        let isDragging = false, startX = 0, currentDragDistance = 0;
+        let isDragging = false, startX = 10, currentDragDistance = 0;
 
         cards.forEach((card, i) => {
             card.style.transform = `rotateY(${i * angleStep}deg) translateZ(${radius}px)`;
@@ -151,7 +303,7 @@ window.addEventListener('load', () => {
         });
     }
 
-    // --- 7. TERMINAL (Simulação Java) ---
+    // --- 8. TERMINAL ---
     const terminalData = [
         { text: "anderson@linux:~$ ", color: "#60a5fa", type: "prompt" }, 
         { text: "python3 hello_world.py", color: "#fff", type: "input", delay: 80 }, 
@@ -166,49 +318,51 @@ window.addEventListener('load', () => {
     ];
     
     let isTerminalTyping = false;
-    
     async function typeTerminal() {
-        const terminalEl = document.getElementById('terminal-code');
-        const cursor = document.getElementById('terminal-cursor');
-        
-        if (!terminalEl || isTerminalTyping) return;
-        isTerminalTyping = true;
-    
-        for (const line of terminalData) {
-            const span = document.createElement('span');
-            span.style.color = line.color;
+    const terminalEl = document.getElementById('terminal-code');
+    const cursor = document.getElementById('terminal-cursor');
+    if (!terminalEl || isTerminalTyping) return;
+    isTerminalTyping = true;
+
+    for (const line of terminalData) {
+        const span = document.createElement('span');
+        span.style.color = line.color;
+        if (line.type === "success") span.className = "block text-xl font-bold mt-2 text-[#7ee787] animate-pulse";
+        terminalEl.appendChild(span);
+
+        if (line.type === "input") {
+            span.appendChild(cursor); 
             
-            if (line.type === "success") {
-                span.className = "block text-xl font-bold mt-2 text-[#7ee787] animate-pulse";
+            // ATIVA o modo estático (parar de piscar)
+            cursor.classList.add('typing');
+
+            for (const char of line.text) {
+                const charNode = document.createTextNode(char);
+                span.insertBefore(charNode, cursor); 
+                await new Promise(r => setTimeout(r, line.delay || 35));
             }
-    
-            terminalEl.appendChild(span);
-    
-            if (line.type === "input") {
-                span.appendChild(cursor); 
-                for (const char of line.text) {
-                    const charNode = document.createTextNode(char);
-                    span.insertBefore(charNode, cursor); 
-                    await new Promise(r => setTimeout(r, line.delay || 50));
-                }
-                terminalEl.appendChild(document.createElement('br'));
-            } else {
-                span.textContent = line.text;
-                if (line.type !== "prompt") {
-                    terminalEl.appendChild(document.createElement('br'));
-                }
-                terminalEl.appendChild(cursor);
-            }
-            await new Promise(r => setTimeout(r, 600));
-            const containerTerm = document.getElementById('terminal-container');
-            if(containerTerm) containerTerm.scrollTop = containerTerm.scrollHeight;
+
+            // DESATIVA o modo estático (volta a piscar) ao fim da linha
+            cursor.classList.remove('typing');
+            
+            terminalEl.appendChild(document.createElement('br'));
+        } else {
+            span.textContent = line.text;
+            if (line.type !== "prompt") terminalEl.appendChild(document.createElement('br'));
+            terminalEl.appendChild(cursor);
         }
+
+        // Tempo de espera entre uma linha e outra (o cursor pisca aqui)
+        await new Promise(r => setTimeout(r, 600));
+        
+        const containerTerm = document.getElementById('terminal-container');
+        if(containerTerm) containerTerm.scrollTop = containerTerm.scrollHeight;
+    }
     }
 
-    // --- 8. MOUSE EFFECT ---
+    // --- 9. MOUSE EFFECT ---
     document.addEventListener('mousemove', (e) => {
         if (window.innerWidth <= 1024) return;
-        
         const bgLight = document.getElementById('bg-light');
         const cursor = document.getElementById('custom-cursor');
         const stackCards = document.querySelectorAll('.stack-card');
@@ -236,24 +390,6 @@ window.addEventListener('load', () => {
         });
     });
 
-    // --- 9. MENU MOBILE ---
-    if (mobileMenuBtn && mobileMenu) {
-        mobileMenuBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const isHidden = mobileMenu.classList.toggle('hidden');
-            mobileMenu.classList.toggle('flex', !isHidden);
-            mobileMenuBtn.querySelector('i').className = isHidden ? 'fas fa-bars' : 'fas fa-times';
-        });
-
-        document.querySelectorAll('.mobile-nav-link').forEach(link => {
-            link.addEventListener('click', () => {
-                mobileMenu.classList.add('hidden');
-                mobileMenu.classList.remove('flex');
-                mobileMenuBtn.querySelector('i').className = 'fas fa-bars';
-            });
-        });
-    }
-
     // --- 10. OBSERVER ---
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => { 
@@ -265,116 +401,3 @@ window.addEventListener('load', () => {
     }, { threshold: 0.1 });
     document.querySelectorAll('.reveal-section, #terminal-code').forEach(s => observer.observe(s));
 });
-
-let player;
-let isMuted = true;
-let musicStarted = false;
-
-// 1. Carrega a API do YouTube de forma assíncrona
-const tag = document.createElement('script');
-tag.src = "https://www.youtube.com/iframe_api";
-const firstScriptTag = document.getElementsByTagName('script')[0];
-firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-// 2. Esta função é chamada automaticamente quando a API do YT está pronta
-function onYouTubeIframeAPIReady() {
-    player = new YT.Player('player', {
-        height: '0',
-        width: '0',
-        videoId: 'Osk6gX6R_bA',
-        playerVars: {
-            'autoplay': 1,
-            'loop': 1,
-            'playlist': 'Osk6gX6R_bA', // Necessário para o loop funcionar
-            'origin': window.location.origin,
-            'controls': 0,
-            'showinfo': 0,
-            'rel': 0,
-            'enablejsapi': 1
-        },
-        events: {
-            'onReady': (event) => {
-                event.target.mute(); // Começa mudo para o navegador permitir o play
-                event.target.playVideo();
-            }
-        }
-    });
-}
-
-// 3. Gerencia o ícone e o estado do som
-function toggleSound() {
-    const soundIcon = document.getElementById('sound-icon');
-    const barsContainer = document.getElementById('bars'); // Faltava essa linha
-    const soundBtn = document.getElementById('sound-control');
-
-    if (!player) return;
-
-    if (isMuted) {
-        player.unMute();
-        player.setVolume(5);
-        
-        // Visual: Mostra barras e esconde ícone
-        soundIcon.classList.add('hidden');
-        barsContainer.classList.remove('hidden');
-        soundBtn.classList.add('playing-pulse'); // Adiciona o pulso que você criou
-    } else {
-        player.mute();
-        
-        // Visual: Mostra ícone e esconde barras
-        soundIcon.className = 'fas fa-volume-mute';
-        soundIcon.classList.remove('hidden');
-        barsContainer.classList.add('hidden');
-        soundBtn.classList.remove('playing-pulse');
-    }
-    isMuted = !isMuted;
-}
-
-// 4. Ativa o som na primeira interação do usuário
-function handleFirstMusicInteraction() {
-    if (!musicStarted && player) {
-        const soundIcon = document.getElementById('sound-icon');
-        const barsContainer = document.getElementById('bars');
-        const soundBtn = document.getElementById('sound-control');
-
-        player.unMute();
-        player.setVolume(5);
-        
-        soundIcon.classList.add('hidden');
-        barsContainer.classList.remove('hidden');
-        soundBtn.classList.add('playing-pulse');
-
-        setTimeout(() => {
-            player.playVideo();
-            player.unMute();
-            player.setVolume(5);
-        }, 100); // 100ms de delay costumam "enganar" o bloqueio do Chrome
-
-        musicStarted = true;
-        isMuted = false;
-        
-        document.removeEventListener("mousedown", handleFirstMusicInteraction);
-        document.removeEventListener("keydown", handleFirstMusicInteraction);
-        document.removeEventListener("touchstart", handleFirstMusicInteraction);
-    }
-}
-
-// 5. Configuração dos Eventos do Botão
-document.getElementById('sound-control').addEventListener('click', (e) => {
-    e.stopPropagation(); // Evita que o clique no botão dispare outras funções indesejadas
-
-    // Se o player existe mas o Chrome bloqueou o autoplaer
-    if(player && typeof player.playVideo === 'function') {
-        player.playVideo(); // Garante que o player foi dado por um clique
-    }
-
-    if (!musicStarted) {
-        handleFirstMusicInteraction();
-    } else {
-        toggleSound();
-    }
-});
-
-// Detecta a primeira interação para soltar o som
-document.addEventListener("mousedown", handleFirstMusicInteraction);
-document.addEventListener("keydown", handleFirstMusicInteraction);
-document.addEventListener("touchstart", handleFirstMusicInteraction);
